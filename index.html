@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KANNAZ Petualangan IPA SD Kelas 2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Comic Sans MS','Segoe UI',sans-serif}
+body{min-height:100vh;background:linear-gradient(180deg,#87ceeb 0%,#c8f7c5 55%,#8bc34a 100%);display:flex;align-items:center;justify-content:center;padding:14px}
+.wrap{width:100%;max-width:520px;background:rgba(255,255,255,.94);border-radius:26px;padding:20px 16px;box-shadow:0 18px 45px rgba(20,80,40,.3);text-align:center}
+h1{color:#1b5e20;font-size:28px;letter-spacing:1px}
+.sub{color:#33691e;font-weight:800;margin:4px 0 12px}
+.mascot{font-size:48px;animation:bounce 2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.bar{display:flex;justify-content:space-between;gap:6px;margin-bottom:12px;font-weight:800;color:#2e7d32}
+.chip{background:#e8f5e9;border:2px solid #81c784;border-radius:14px;padding:7px 9px;font-size:13px;flex:1}
+.progress{height:16px;background:#dcedc8;border-radius:10px;overflow:hidden;margin-bottom:14px;border:2px solid #81c784}
+.fill{height:100%;width:0;background:linear-gradient(90deg,#66bb6a,#ffb300);transition:.4s}
+.map{display:flex;justify-content:center;gap:6px;margin-bottom:14px;font-size:22px}
+.stage{opacity:.35;transition:.3s}
+.stage.done{opacity:1}
+.stage.now{transform:scale(1.25);filter:drop-shadow(0 0 6px #ff9800)}
+.card{background:#fff;border:3px solid #a5d6a7;border-radius:20px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
+.scene{font-size:64px;margin-bottom:6px}
+.story{color:#33691e;font-weight:700;font-size:15px;margin-bottom:12px;line-height:1.45}
+.question{color:#1b5e20;font-weight:900;font-size:18px;margin-bottom:14px}
+.opts{display:grid;gap:10px}
+.opt{background:#e8f5e9;border:3px solid #81c784;border-radius:16px;padding:12px;font-size:16px;font-weight:800;color:#1b5e20;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:10px;justify-content:center}
+.opt:hover{transform:scale(1.03);background:#c8e6c9}
+.opt.right{background:#a5d6a7;border-color:#2e7d32;animation:pop .4s}
+.opt.wrong{background:#ffcdd2;border-color:#e53935;animation:shake .4s}
+@keyframes pop{50%{transform:scale(1.08)}}
+@keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.msg{min-height:26px;font-weight:800;color:#1b5e20;margin-top:10px}
+button.act{background:#43a047;color:#fff;border:0;border-radius:14px;padding:11px 18px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #2e7d32;margin-top:8px}
+button.act:active{transform:translateY(3px);box-shadow:none}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px}
+.card2{background:#fff;border-radius:22px;padding:26px;max-width:360px;width:100%;text-align:center;box-shadow:0 15px 40px rgba(0,0,0,.3)}
+.card2 h2{color:#2e7d32;margin-bottom:8px}
+.card2 p{color:#555;margin-bottom:12px}
+.confetti{position:fixed;top:-12px;font-size:24px;animation:fall 2.6s linear forwards;pointer-events:none;z-index:9}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.2}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mascot">🦊🌱</div>
+  <h1>KANNAZ PETUALANGAN</h1>
+  <div class="sub">Menjelajah Alam Bersama Kiko si Rubah</div>
+  <div class="bar">
+    <div class="chip">⭐ Nilai: <span id="score">0</span></div>
+    <div class="chip">🗺️ Petualangan: <span id="level">1</span>/6</div>
+    <div class="chip">🔊 <span id="soundState">ON</span></div>
+  </div>
+  <div class="progress"><div class="fill" id="fill"></div></div>
+  <div class="map" id="map"></div>
+  <div class="card">
+    <div class="scene" id="scene">🌳</div>
+    <div class="story" id="story"></div>
+    <div class="question" id="question"></div>
+    <div class="opts" id="opts"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+  <button class="act" onclick="toggleSound()" id="soundBtn">🔊 Suara: ON</button>
+</div>
+
+<div class="modal" id="modal">
+  <div class="card2">
+    <div style="font-size:58px">🏆🦊🌿</div>
+    <h2>Petualangan Selesai!</h2>
+    <p>Kiko berhasil membantu hewan dan tumbuhan di Kanna.<br>Nilai akhirmu: <b id="finalScore">0</b></p>
+    <button class="act" onclick="startGame()">Main Lagi 🎮</button>
+  </div>
+</div>
+
+<script>
+const LEVELS=[
+{scene:'🌳',title:'Hutan Kanna',
+ story:'Kiko si rubah masuk hutan. Ia bertemu pohon mangga yang daunnya rimbun. Pohon membutuhkan bagian tubuh untuk menyerap air dari tanah.',
+ q:'Bagian tumbuhan yang menyerap air dari tanah adalah…',
+ opts:['🌱 Akar','🍃 Daun','🌸 Bunga'],a:0},
+{scene:'☀️',title:'Kebun Ceria',
+ story:'Kiko bertemu tanaman jagung. Daunnya hijau dan lebar. Daun membantu tumbuhan membuat makanan dengan bantuan matahari.',
+ q:'Bagian tumbuhan yang membantu membuat makanan adalah…',
+ opts:['🌱 Akar','🍃 Daun','🥔 Umbi'],a:1},
+{scene:'🐔',title:'Kandang Ayam',
+ story:'Kiko melihat ayam mencari makanan. Ayam menggunakan bagian tubuh khusus untuk mematuk biji-bijian.',
+ q:'Bagian tubuh ayam untuk mematuk makanan adalah…',
+ opts:['🐾 Kaki','🦷 Gigi','🐤 Paruh'],a:2},
+{scene:'🐟',title:'Sungai Jernih',
+ story:'Kiko berjalan ke sungai. Ikan berenang dengan lincah dan bernapas di dalam air.',
+ q:'Bagian tubuh ikan untuk bernapas di air adalah…',
+ opts:['🫁 Paru-paru','💧 Insang','👂 Telinga'],a:1},
+{scene:'🦋',title:'Taman Bunga',
+ story:'Di taman, kupu-kupu terbang dari bunga ke bunga. Bunga memiliki bagian penting untuk tumbuhan berkembang biak.',
+ q:'Bagian tumbuhan yang berfungsi untuk berkembang biak adalah…',
+ opts:['🌸 Bunga','🍃 Daun','🌱 Akar'],a:0},
+{scene:'🐐',title:'Padang Rumput',
+ story:'Kambing makan rumput di padang. Kambing bergerak menggunakan kakinya dan memiliki tanduk di kepalanya.',
+ q:'Bagian tubuh kambing yang digunakan untuk berjalan adalah…',
+ opts:['🦶 Kaki','🦷 Gigi','👂 Telinga'],a:0}
+];
+
+let idx=0,score=0,soundOn=true,locked=false;
+const mapEl=document.getElementById('map');
+
+function beep(freq,dur,type='sine',vol=.18){
+ if(!soundOn)return;
+ const c=new (window.AudioContext||window.webkitAudioContext)();
+ const o=c.createOscillator(),g=c.createGain();
+ o.type=type;o.frequency.value=freq;g.gain.value=vol;
+ o.connect(g);g.connect(c.destination);o.start();
+ g.gain.exponentialRampToValueAtTime(.001,c.currentTime+dur);
+ o.stop(c.currentTime+dur);
+}
+function good(){beep(660,.12);setTimeout(()=>beep(880,.18),110)}
+function bad(){beep(180,.22,'square',.12)}
+function win(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.18),i*130))}
+
+function toggleSound(){
+ soundOn=!soundOn;
+ document.getElementById('soundBtn').textContent=soundOn?'🔊 Suara: ON':'🔇 Suara: OFF';
+ document.getElementById('soundState').textContent=soundOn?'ON':'OFF';
+}
+
+function renderMap(){
+ mapEl.innerHTML='';
+ LEVELS.forEach((l,i)=>{
+  const s=document.createElement('div');
+  s.className='stage'+(i<idx?' done':'')+(i===idx?' now':'');
+  s.textContent=i<idx?'✅':['🌳','☀️','🐔','🐟','🦋','🐐'][i];
+  mapEl.appendChild(s);
+ });
+ document.getElementById('fill').style.width=(idx/LEVELS.length*100)+'%';
+ document.getElementById('level').textContent=Math.min(idx+1,LEVELS.length);
+}
+
+function showLevel(){
+ const L=LEVELS[idx];
+ document.getElementById('scene').textContent=L.scene;
+ document.getElementById('story').textContent=L.story;
+ document.getElementById('question').textContent=L.q;
+ document.getElementById('msg').textContent='';
+ const box=document.getElementById('opts');box.innerHTML='';
+ L.opts.forEach((o,i)=>{
+  const b=document.createElement('button');
+  b.className='opt';b.innerHTML=o;
+  b.onclick=()=>answer(i,b);
+  box.appendChild(b);
+ });
+ renderMap();
+}
+
+function answer(i,btn){
+ if(locked)return;locked=true;
+ const L=LEVELS[idx];
+ if(i===L.a){
+  btn.classList.add('right');good();
+  score+=15;document.getElementById('score').textContent=score;
+  document.getElementById('msg').textContent='Benar! Kiko melanjutkan petualangan! 🎉';
+  setTimeout(()=>{locked=false;idx++;idx<LEVELS.length?showLevel():finish();},1100);
+ }else{
+  btn.classList.add('wrong');bad();
+  document.getElementById('msg').textContent='Belum tepat. Coba pikirkan lagi! 🤔';
+  setTimeout(()=>{btn.classList.remove('wrong');locked=false;},800);
+ }
+}
+
+function finish(){
+ win();document.getElementById('finalScore').textContent=score;
+ document.getElementById('modal').style.display='flex';
+ for(let i=0;i<45;i++){
+  const s=document.createElement('div');s.className='confetti';
+  s.textContent=['🌱','🍃','🌸','🐾','⭐','🎉'][i%6];
+  s.style.left=Math.random()*100+'vw';s.style.animationDelay=Math.random()*1.2+'s';
+  document.body.appendChild(s);setTimeout(()=>s.remove(),4000);
+ }
+}
+
+function startGame(){
+ idx=0;score=0;locked=false;
+ document.getElementById('score').textContent=0;
+ document.getElementById('modal').style.display='none';
+ showLevel();
+}
+
+startGame();
+</script>
+</body>
+</html>
